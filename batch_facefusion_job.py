@@ -120,5 +120,5 @@ def main():
         print(result_run.stdout)
 
 if __name__ == '__main__':
-    main()
+    main() 
 
