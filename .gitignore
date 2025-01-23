@@ -4,3 +4,9 @@
 .idea
 .vscode
 __pycache__/
+#log files
+facefusion_stdout.log
+facefusion_stderr.log
+
+#Custom script
+facefusion_davidsedit.py
