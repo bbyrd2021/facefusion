@@ -4,6 +4,7 @@ import sys
 from time import time
 
 import numpy
+import traceback
 
 from facefusion import content_analyser, face_classifier, face_detector, face_landmarker, face_masker, face_recognizer, logger, process_manager, state_manager, voice_extractor, wording
 from facefusion.args import apply_args, collect_job_args, reduce_step_args
@@ -29,23 +30,29 @@ from facefusion.vision import get_video_frame, pack_resolution, read_image, read
 
 
 def cli() -> None:
-	signal.signal(signal.SIGINT, lambda signal_number, frame: graceful_exit(0))
-	program = create_program()
+	try:
+		signal.signal(signal.SIGINT, lambda signal_number, frame: graceful_exit(0))
+		program = create_program()
 
-	if validate_args(program):
-		args = vars(program.parse_args())
-		apply_args(args, state_manager.init_item)
+		if validate_args(program):
+			args = vars(program.parse_args())
+			apply_args(args, state_manager.init_item)
 
-		if state_manager.get_item('command'):
-			logger.init(state_manager.get_item('log_level'))
-			route(args)
-		else:
-			program.print_help()
+			if state_manager.get_item('command'):
+				logger.init(state_manager.get_item('log_level'))
+				route(args)
+			else:
+				program.print_help()
+	except Exception as e:
+		logger.error(f"An error occurred: {e}\n{traceback.format_exc()}")
+		sys.exit(1)
 
 
 def route(args : Args) -> None:
 	system_memory_limit = state_manager.get_item('system_memory_limit')
+	
 	if system_memory_limit and system_memory_limit > 0:
+		print("System Memory Limit: " + system_memory_limit)
 		limit_system_memory(system_memory_limit)
 	if state_manager.get_item('command') == 'force-download':
 		error_code = force_download()
@@ -328,6 +335,7 @@ def process_image(start_time : float) -> ErrorCode:
 		processor_module.post_process()
 	if is_process_stopping():
 		process_manager.end()
+		logger.debug("Brandon's custom message: The process stopped")
 		return 4
 	# finalize image
 	logger.info(wording.get('finalizing_image').format(resolution = state_manager.get_item('output_image_resolution')), __name__)
