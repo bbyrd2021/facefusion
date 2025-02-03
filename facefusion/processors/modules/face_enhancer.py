@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 from functools import lru_cache
 from typing import List
+from memory_profiler import profile
 
 import cv2
 import numpy
@@ -282,7 +283,7 @@ def post_process() -> None:
 		face_masker.clear_inference_pool()
 		face_recognizer.clear_inference_pool()
 
-
+@profile
 def enhance_face(target_face : Face, temp_vision_frame : VisionFrame) -> VisionFrame:
 	model_template = get_model_options().get('template')
 	model_size = get_model_options().get('size')
@@ -306,7 +307,7 @@ def enhance_face(target_face : Face, temp_vision_frame : VisionFrame) -> VisionF
 	temp_vision_frame = blend_frame(temp_vision_frame, paste_vision_frame)
 	return temp_vision_frame
 
-
+@profile
 def forward(crop_vision_frame : VisionFrame, face_enhancer_weight : FaceEnhancerWeight) -> VisionFrame:
 	face_enhancer = get_inference_pool().get('face_enhancer')
 	face_enhancer_inputs = {}
@@ -357,7 +358,7 @@ def blend_frame(temp_vision_frame : VisionFrame, paste_vision_frame : VisionFram
 def get_reference_frame(source_face : Face, target_face : Face, temp_vision_frame : VisionFrame) -> VisionFrame:
 	return enhance_face(target_face, temp_vision_frame)
 
-
+@profile
 def process_frame(inputs : FaceEnhancerInputs) -> VisionFrame:
 	reference_faces = inputs.get('reference_faces')
 	target_vision_frame = inputs.get('target_vision_frame')

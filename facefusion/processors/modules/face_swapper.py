@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 from functools import lru_cache
 from typing import List, Tuple
+from memory_profiler import profile
 
 import numpy
 
@@ -409,7 +410,7 @@ def post_process() -> None:
 		face_masker.clear_inference_pool()
 		face_recognizer.clear_inference_pool()
 
-
+@profile
 def swap_face(source_face : Face, target_face : Face, temp_vision_frame : VisionFrame) -> VisionFrame:
 	model_template = get_model_options().get('template')
 	model_size = get_model_options().get('size')
@@ -443,7 +444,7 @@ def swap_face(source_face : Face, target_face : Face, temp_vision_frame : Vision
 	temp_vision_frame = paste_back(temp_vision_frame, crop_vision_frame, crop_mask, affine_matrix)
 	return temp_vision_frame
 
-
+@profile
 def forward_swap_face(source_face : Face, crop_vision_frame : VisionFrame) -> VisionFrame:
 	face_swapper = get_inference_pool().get('face_swapper')
 	model_type = get_model_options().get('type')
@@ -545,7 +546,7 @@ def normalize_crop_frame(crop_vision_frame : VisionFrame) -> VisionFrame:
 def get_reference_frame(source_face : Face, target_face : Face, temp_vision_frame : VisionFrame) -> VisionFrame:
 	return swap_face(source_face, target_face, temp_vision_frame)
 
-
+@profile
 def process_frame(inputs : FaceSwapperInputs) -> VisionFrame:
 	reference_faces = inputs.get('reference_faces')
 	source_face = inputs.get('source_face')
