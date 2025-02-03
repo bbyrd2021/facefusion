@@ -12,6 +12,16 @@ def print_memory_usage(label):
     mem_info = process.memory_info()
     print(f"[MEMORY] {label}: RSS={mem_info.rss / (1024 ** 3):.2f} GB, VMS={mem_info.vms / (1024 ** 3):.2f} GB")
 
+def log_unreachable_objects(label=""):
+    unreachable_count = gc.collect()
+    print(f"[GC] {label} gc.collect() returned: {unreachable_count}")
+    if gc.garbage:
+        print("Unreachable objects:")
+        for obj in gc.garbage:
+            print(obj)
+    else:
+        print("No unreachable objects.")	
+
 def run_job(job_id : str, process_step : ProcessStep) -> bool:
 	queued_job_ids = job_manager.find_job_ids('queued')
 
@@ -36,6 +46,7 @@ def run_jobs(process_step : ProcessStep, batch_size = 2) -> bool:
 					return False
 				
 			gc.collect()
+			log_unreachable_objects("After batch processing")
 
 		return True
 	return False
@@ -75,12 +86,14 @@ def run_step(job_id : str, step_index : int, step : JobStep, process_step : Proc
 
 		gc.collect()
 		print_memory_usage(f"After Step {step_index}")
+		log_unreachable_objects(f"After Step {step_index}")
 
 		return success
 	job_manager.set_step_status(job_id, step_index, 'failed')
 
 	gc.collect()
 	print_memory_usage(f"Failed Step {step_index}")
+	log_unreachable_objects(f"Failed Step {step_index}")
 
 	return False
 
@@ -109,6 +122,7 @@ def finalize_steps(job_id : str) -> bool:
 					return False
 				
 	gc.collect()
+	log_unreachable_objects("After finalizing steps")
 	return True
 
 
