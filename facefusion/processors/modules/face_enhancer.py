@@ -2,6 +2,7 @@ from argparse import ArgumentParser
 from functools import lru_cache
 from typing import List
 from memory_profiler import profile
+from PIL import Image 
 
 import cv2
 import numpy
@@ -394,16 +395,29 @@ def process_frames(source_path : List[str], queue_payloads : List[QueuePayload],
 		write_image(target_vision_path, output_vision_frame)
 		update_progress(1)
 
+def compress_image(image_path: str, quality: int = 85) -> None:
+	"""Compress image to reduce memory usage. """
+	with Image.open(image_path) as img:
+		img = img.convert("RGBA")
+		img.save(image_path, "PNG", quality=quality, optimize = True)
 
 def process_image(source_path : str, target_path : str, output_path : str) -> None:
 	reference_faces = get_reference_faces() if 'reference' in state_manager.get_item('face_selector_mode') else None
+
+	#compress input image before processing to reduce memory footprint
+	compress_image(target_path)
+
 	target_vision_frame = read_static_image(target_path)
 	output_vision_frame = process_frame(
 	{
 		'reference_faces': reference_faces,
 		'target_vision_frame': target_vision_frame
 	})
+
 	write_image(output_path, output_vision_frame)
+
+	#Compress output image to optimize storage
+	compress_image(output_path)
 
 
 def process_video(source_paths : List[str], temp_frame_paths : List[str]) -> None:

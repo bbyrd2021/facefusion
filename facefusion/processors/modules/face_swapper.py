@@ -2,6 +2,7 @@ from argparse import ArgumentParser
 from functools import lru_cache
 from typing import List, Tuple
 from memory_profiler import profile
+from PIL import Image
 
 import numpy
 
@@ -594,6 +595,12 @@ def process_frames(source_paths : List[str], queue_payloads : List[QueuePayload]
 		update_progress(1)
 
 
+def compress_image(image_path: str) -> None:
+	"""Compress PNG image to reduce memory usage without losing quality"""
+	with Image.open(image_path) as img:
+		img = img.convert("RGBA")
+		img.save(image_path, "PNG", optimize=True)
+
 def process_image(source_paths : List[str], target_path : str, output_path : str) -> None:
 	reference_faces = get_reference_faces() if 'reference' in state_manager.get_item('face_selector_mode') else None
 	source_frames = read_static_images(source_paths)
@@ -605,6 +612,9 @@ def process_image(source_paths : List[str], target_path : str, output_path : str
 		if temp_faces:
 			source_faces.append(get_first(temp_faces))
 	source_face = get_average_face(source_faces)
+
+	compress_image(target_path)
+
 	target_vision_frame = read_static_image(target_path)
 	output_vision_frame = process_frame(
 	{
@@ -612,7 +622,10 @@ def process_image(source_paths : List[str], target_path : str, output_path : str
 		'source_face': source_face,
 		'target_vision_frame': target_vision_frame
 	})
+
 	write_image(output_path, output_vision_frame)
+
+	compress_image(output_path)
 
 
 def process_video(source_paths : List[str], temp_frame_paths : List[str]) -> None:
